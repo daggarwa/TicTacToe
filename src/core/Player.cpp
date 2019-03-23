@@ -1,13 +1,18 @@
 #include "core/Player.h"
 
-Player::Player(BoardSquareState const& playerSymbol)
-    : m_playerSymbol(playerSymbol) {}
+Player::Player(BoardSquareState const& playerSymbol, PlayerType type_)
+    : m_playerSymbol(playerSymbol), m_type(type_) {}
 
-Player Player::opponent() const { return (*this) == CROSS ? NOUGHT : CROSS; }
+Player const* Player::opponent() const {
+  return this->m_playerSymbol == BoardSquareState::CROSS ? NOUGHT.get()
+                                                         : CROSS.get();
+}
 
 bool Player::operator==(const Player& rhs) const {
   return this->m_playerSymbol == rhs.m_playerSymbol;
 }
+
+PlayerType Player::type() const { return m_type; }
 
 BoardSquareState Player::playerSymbol() const { return m_playerSymbol; }
 

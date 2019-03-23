@@ -18,5 +18,5 @@ class EvaluationFunction {
    * @return score for the current move
    */
  public:
-  virtual int evaluate(const GameBoard& board, const Player& player) const = 0;
+  virtual int evaluate(const GameBoard& board, Player const* player) const = 0;
 };

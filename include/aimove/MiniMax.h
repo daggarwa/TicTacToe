@@ -22,7 +22,7 @@ class MiniMax : public SimpleSearcher {
   static int signum(int x);
 
   virtual SearchResult simpleSearch(GameBoard const& board,
-                                    Player const& player, const int depth,
+                                    Player const* player, const int depth,
                                     EvaluationFunction const& evfunction);
 
   /**

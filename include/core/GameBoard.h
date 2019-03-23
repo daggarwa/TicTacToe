@@ -17,7 +17,8 @@
  * @author d
  */
 class GameBoard {
-  std::vector<std::vector<BoardSquareState>> gameBoard;
+  std::array<std::array<BoardSquareState, GameConstants::SIZE>,
+             GameConstants::SIZE> gameBoard;
   BoardStats stats;
 
   /**
@@ -73,7 +74,8 @@ class GameBoard {
    *
    * @return the game board
    */
-  std::vector<std::vector<BoardSquareState>> const& getGameBoard() const;
+  std::array<std::array<BoardSquareState, GameConstants::SIZE>,
+             GameConstants::SIZE> const& getGameBoard() const;
 
   BoardStats getStats() const;
 
@@ -82,8 +84,8 @@ class GameBoard {
    *
    * @param gameBoard the new game board
    */
-  void setGameBoard(
-      std::vector<std::vector<BoardSquareState>> const& gameBoard);
+  void setGameBoard(std::array<std::array<BoardSquareState, GameConstants::SIZE>,
+                 GameConstants::SIZE> const& gameBoard);
 
   /**
    * Instantiates a new game board from an existing board.
@@ -126,7 +128,7 @@ class GameBoard {
    * @param player
    * @return true if won else false
    */
-  bool checkIfWon(Player const& player) const;
+  bool checkIfWon(Player const* player) const;
 
   /**
    * Gets the possible moves.
@@ -134,7 +136,7 @@ class GameBoard {
    * @param player
    * @return list of possible moves for the player
    */
-  std::vector<Move> getPossibleMoves(Player const& player) const;
+  std::vector<Move> getPossibleMoves() const;
 
   /**
    * Marks possible moves on the board for the player to see.

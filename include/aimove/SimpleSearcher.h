@@ -20,6 +20,6 @@ class SimpleSearcher {
    * @return the search result
    */
   virtual SearchResult simpleSearch(const GameBoard &board,
-                                    Player const &player, const int depth,
+                                    Player const *player, const int depth,
                                     const EvaluationFunction &function) = 0;
 };

@@ -1,14 +1,14 @@
 #include "aimove/ScoreDifferenceEvaluationFunction.h"
 
-#include <limits>
 #include <cmath>
+#include <limits>
 
 int ScoreDifferenceEvaluationFunction::calculateScore(
-    GameBoard const& board, Player const& player) const {
+    GameBoard const& board, Player const* player) const {
   int score = 0;
   const auto& stats = board.getStats();
-  auto p = static_cast<int>(player.playerSymbol());
-  auto o = static_cast<int>(player.opponent().playerSymbol());
+  auto p = static_cast<int>(player->playerSymbol());
+  auto o = static_cast<int>(player->opponent()->playerSymbol());
   for (size_t i = 0; i < GameConstants::SIZE; i++) {
     if (stats.rowCounts[i][o] == 0) {
       score += std::pow(10, stats.rowCounts[i][p]);
@@ -27,9 +27,9 @@ int ScoreDifferenceEvaluationFunction::calculateScore(
 }
 
 int ScoreDifferenceEvaluationFunction::evaluate(GameBoard const& board,
-                                                Player const& player) const {
+                                                Player const* player) const {
   auto playerWon = board.checkIfWon(player);
-  auto opponentWon = board.checkIfWon(player.opponent());
+  auto opponentWon = board.checkIfWon(player->opponent());
 
   if (playerWon) {
     return std::numeric_limits<int>::max();
@@ -39,6 +39,6 @@ int ScoreDifferenceEvaluationFunction::evaluate(GameBoard const& board,
   }
 
   auto playerScore = calculateScore(board, player);
-  auto opponentScore = calculateScore(board, player.opponent());
+  auto opponentScore = calculateScore(board, player->opponent());
   return playerScore - opponentScore;
 }

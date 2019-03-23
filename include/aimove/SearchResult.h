@@ -22,18 +22,14 @@ class SearchResult {
    *
    * @return the score
    */
-  int getScore() { 
-	  return score; 
-  }
+  int getScore() { return score; }
 
   /**
    * Gets the move.
    *
    * @return the move
    */
-  Move getMove() { 
-	  return move; 
-  }
+  Move getMove() { return move; }
 
   /**
    * Returns negation of score for opponent
@@ -41,9 +37,7 @@ class SearchResult {
    *
    * @return the search result
    */
-  SearchResult negated() { 
-	  return SearchResult(move, -score); 
-  }
+  SearchResult negated() { return SearchResult(move, -score); }
 
   /**
    * Instantiates a new search result.

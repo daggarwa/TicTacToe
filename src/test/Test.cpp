@@ -7,49 +7,52 @@
 #include <vector>
 
 #include "controller/GameController.h"
-
+#include "core/AIPlayer.h"
 #include "core/BoardSquareState.h"
 #include "core/Move.h"
-#include "core/Player.h"
+#include "core/RandomHumanPlayer.h"
 
-const Player Player::CROSS(BoardSquareState::CROSS);
-const Player Player::NOUGHT(BoardSquareState::NOUGHT);
+std::unique_ptr<Player> Player::CROSS = std::make_unique<RandomHumanPlayer>(
+    RandomHumanPlayer(BoardSquareState::CROSS));
+std::unique_ptr<Player> Player::NOUGHT =
+    std::make_unique<AIPlayer>(AIPlayer(BoardSquareState::NOUGHT));
 auto X = BoardSquareState::CROSS;
 auto O = BoardSquareState::NOUGHT;
 auto _ = BoardSquareState::EMPTY;
 
-const std::vector<std::vector<BoardSquareState>> win_board1{
-    {_, X, _}, {_, O, _}, {_, X, _}};
+const std::array<std::array<BoardSquareState, GameConstants::SIZE>,
+                 GameConstants::SIZE>
+    win_board1{{{_, X, _}, {_, O, _}, {_, X, _}}};
 
-const std::vector<std::vector<BoardSquareState>> win_board2{
-    {O, X, _}, {_, _, _}, {_, X, _}};
+const std::array<std::array<BoardSquareState, GameConstants::SIZE>,
+                 GameConstants::SIZE>
+    win_board2{{{O, X, _}, {_, _, _}, {_, X, _}}};
 
-const std::vector<std::vector<BoardSquareState>> win_board3{
-    {O, X, X}, {_, _, _}, {_, _, _}};
+const std::array<std::array<BoardSquareState, GameConstants::SIZE>,
+                 GameConstants::SIZE>
+    win_board3{{{O, X, X}, {_, _, _}, {_, _, _}}};
 
-const std::vector<std::vector<BoardSquareState>> draw_board4{
-    {X, _, _}, {_, _, _}, {_, _, _}};
+const std::array<std::array<BoardSquareState, GameConstants::SIZE>,
+                 GameConstants::SIZE>
+    draw_board4{{{X, _, _}, {_, _, _}, {_, _, _}}};
 
 class GameTest {
   GameController controller;
-  Player human;
   bool printDebugInfo;
 
  public:
   GameTest(bool _printDebugInfo)
-      : controller(GameController()),
-        human(Player::CROSS),
-        printDebugInfo(_printDebugInfo) {}
+      : controller(GameController()), printDebugInfo(_printDebugInfo) {}
 
-  void play(std::vector<std::vector<BoardSquareState>> const& board,
-            bool& isDraw, Player& winner) {
-    std::vector<Move> possibleMoves = std::vector<Move>();
+  void play(std::array<std::array<BoardSquareState, GameConstants::SIZE>,
+                       GameConstants::SIZE> const& board,
+            bool& isDraw, Player const*& winner) {
     Move move;
     GameBoard gameBoard;
     gameBoard.setGameBoard(board);
     controller.setGameBoard(gameBoard);
-    controller.setPlayer(human.opponent());
-    controller.setDifficulty(DifficultyLevel::MAX);
+    Player::NOUGHT->setDifficulty(DifficultyLevel::MAX);
+    controller.setPlayer(Player::NOUGHT.get());
 
     // Play till end of game
     while (!controller.endOfGame()) {
@@ -57,16 +60,8 @@ class GameTest {
         std::cout << playerString(controller.currentPlayer()) + "'s turn"
                   << std::endl;
       }
-      possibleMoves.clear();
-      if (controller.currentPlayer() == human) {
-        possibleMoves = controller.markPossibleMoves();
-        controller.unmarkPossibleMoves();
-        move = selectRandomMove(possibleMoves);
-        controller.makeMove(move);
-      } else {
-        move = controller.evaluateMove();
-        controller.makeMove(move);
-      }
+      move = controller.nextMove();
+      controller.makeMove(move);
       if (printDebugInfo) {
         std::cout << controller.printGameBoard();
         std::cout << std::endl;
@@ -80,16 +75,9 @@ class GameTest {
     winner = controller.getWinner();
   }
 
-  Move selectRandomMove(std::vector<Move>& moves) const {
-    std::sort(moves.begin(), moves.end());
-    int moveIdx = 0;
-    moveIdx = rand() % moves.size();
-    return moves[moveIdx];
-  }
-
   /**
-* Method displays the final winner when game has ended.
-*/
+  * Method displays the final winner when game has ended.
+  */
   void declareWinner() {
     std::cout << controller.printGameBoard();
     if (controller.isDraw()) {
@@ -105,8 +93,9 @@ class GameTest {
   /**
   * Method called to display next player's name.
   */
-  std::string playerString(const Player& player) const {
-    return player == BoardSquareState::CROSS ? "CROSS" : "NOUGHT";
+  std::string playerString(Player const* player) const {
+    return player->playerSymbol() == BoardSquareState::CROSS ? "CROSS"
+                                                             : "NOUGHT";
   }
 };
 
@@ -114,28 +103,30 @@ int main(int argc, char** argv) {
   try {
     GameTest game(false);
 
-    const std::vector<std::vector<BoardSquareState>> win_boards[] = {
-        win_board1, win_board2, win_board3};
+    const std::array<std::array<BoardSquareState, GameConstants::SIZE>,
+                     GameConstants::SIZE>
+        win_boards[] = {win_board1, win_board2, win_board3};
     int test = 0;
     for (const auto& board : win_boards) {
       for (size_t i = 0; i < 100; i++) {
         bool isDraw = true;
-        Player winner(BoardSquareState::EMPTY);
+        Player const* winner = Player::CROSS.get();
         game.play(board, isDraw, winner);
         assert(isDraw == false);
-        assert(winner == Player::NOUGHT);
+        assert(winner == Player::NOUGHT.get());
         std::cout << "Passed win test " << ++test << "/300" << std::endl;
       }
     }
 
-    const std::vector<std::vector<BoardSquareState>> draw_boards[] = {
-        draw_board4};
+    const std::array<std::array<BoardSquareState, GameConstants::SIZE>,
+                     GameConstants::SIZE>
+        draw_boards[] = {draw_board4};
     for (const auto& board : draw_boards) {
       for (size_t i = 0; i < 10; i++) {
         bool isDraw = true;
-        Player winner(BoardSquareState::EMPTY);
+        Player const* winner = Player::CROSS.get();
         game.play(board, isDraw, winner);
-        assert(isDraw == true || winner == Player::NOUGHT);
+        assert(isDraw == true || winner == Player::NOUGHT.get());
         std::cout << "Passed draw test " << i << "/10" << std::endl;
       }
     }

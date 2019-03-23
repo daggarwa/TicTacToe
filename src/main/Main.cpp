@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <chrono>
 #include <iostream>
+#include <memory>
 #include <thread>
 #include <vector>
 
@@ -8,30 +9,31 @@
 
 #include "controller/GameController.h"
 
+#include "core/AIPlayer.h"
 #include "core/BoardSquareState.h"
 #include "core/GameBoard.h"
 #include "core/GameConstants.h"
+#include "core/HumanPlayer.h"
 #include "core/Move.h"
-#include "core/Player.h"
 
-const Player Player::CROSS(BoardSquareState::CROSS);
-const Player Player::NOUGHT(BoardSquareState::NOUGHT);
+std::unique_ptr<Player> Player::CROSS =
+    std::make_unique<HumanPlayer>(HumanPlayer(BoardSquareState::CROSS));
+std::unique_ptr<Player> Player::NOUGHT =
+    std::make_unique<AIPlayer>(AIPlayer(BoardSquareState::NOUGHT));
 
 class GameMain {
  public:
   /** Instance for the game controller. */
   GameController controller;
-
-  /** Object to represent human player */
-  Player human;
-
-  /** Variable for tracking if opponent is AI player or not*/
-  bool isOpponentAIPlayer = false;
-
+  Player* player1;
+  Player* player2;
   /**
   * Constructor
   */
-  GameMain() : controller(GameController()), human(Player::CROSS) {}
+  GameMain()
+      : controller(GameController()),
+        player1(Player::CROSS.get()),
+        player2(Player::NOUGHT.get()) {}
 
   /**
   * Read the input choice by user.
@@ -68,11 +70,35 @@ class GameMain {
     while (true) {
       switch (readInput()) {
         case 1:
-          isOpponentAIPlayer = true;
+          if (player2->playerSymbol() == BoardSquareState::CROSS) {
+            if (Player::CROSS->type() != PlayerType::AI) {
+              Player::CROSS =
+                  std::make_unique<AIPlayer>(AIPlayer(BoardSquareState::CROSS));
+            }
+            player2 = Player::CROSS.get();
+          } else if (player2->playerSymbol() == BoardSquareState::NOUGHT) {
+            if (Player::NOUGHT->type() != PlayerType::AI) {
+              Player::NOUGHT = std::make_unique<AIPlayer>(
+                  AIPlayer(BoardSquareState::NOUGHT));
+            }
+            player2 = Player::NOUGHT.get();
+          }
           startGame();
           break;
         case 2:
-          isOpponentAIPlayer = false;
+          if (player2->playerSymbol() == BoardSquareState::CROSS) {
+            if (Player::CROSS->type() != PlayerType::HUMAN) {
+              Player::CROSS = std::make_unique<HumanPlayer>(
+                  HumanPlayer(BoardSquareState::CROSS));
+            }
+            player2 = Player::CROSS.get();
+          } else if (player2->playerSymbol() == BoardSquareState::NOUGHT) {
+            if (Player::NOUGHT->type() != PlayerType::HUMAN) {
+              Player::NOUGHT = std::make_unique<HumanPlayer>(
+                  HumanPlayer(BoardSquareState::NOUGHT));
+            }
+            player2 = Player::NOUGHT.get();
+          }
           startGame();
           break;
         case 3:
@@ -94,51 +120,23 @@ class GameMain {
   * Method is called when a new game is started
   */
   void startGame() {
-    std::vector<Move> possibleMoves = std::vector<Move>();
-    Move move;
     // If game is started fresh then reset everything.
-    controller.getGameBoard().resetGameBoard();
-    controller.setPlayer(human);
+    controller.setGameBoard(GameBoard());
+    controller.setPlayer(player1);
     std::cout << controller.printGameBoard() << std::endl;
-    std::cout << playerString(human) + "'s turn";
     // Play till end of game
     while (!controller.endOfGame()) {
-      possibleMoves.clear();
-      if (controller.currentPlayer() == human || !isOpponentAIPlayer) {
-        possibleMoves = controller.markPossibleMoves();
-        std::cout << controller.printGameBoard();
-        controller.unmarkPossibleMoves();
-      }
-      // Human player making move from possible moves
-      if (!possibleMoves.empty()) {
-        move = selectMove(possibleMoves);
-        std::cout << "Making move.." << std::endl;
-        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-        controller.makeMove(move);
-        std::cout << controller.printGameBoard();
+      std::cout << playerString(controller.currentPlayer()) + "'s turn";
+      std::cout << std::endl;
 
-      }  // AI player making move from possible moves
-      else if (isOpponentAIPlayer &&
-               controller.currentPlayer() == human.opponent()) {
-        move = controller.evaluateMove();
-        std::cout << std::endl << "Making move..";
-        std::this_thread::sleep_for(std::chrono::milliseconds(2000));
-        controller.makeMove(move);
-        std::cout << controller.printGameBoard();
-      }  // Timed out and failed to make move
-      else {
-        std::cout << std::endl
-                  << "Oh! " << controller.currentPlayer() << " lost his turn"
-                  << std::endl;
-      }
+      auto move = controller.nextMove();
+      std::cout << "Making move.." << std::endl;
+      controller.makeMove(move);
+      std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+      std::cout << controller.printGameBoard();
 
       std::cout << std::endl << "Changing turn.." << std::endl;
-      std::this_thread::sleep_for(std::chrono::milliseconds(2000));
       controller.changeTurn();
-
-      std::cout << std::endl;
-      std::cout << playerString(controller.currentPlayer()) + "'s turn"
-                << std::endl;
     }
     declareWinner();
 
@@ -146,35 +144,10 @@ class GameMain {
   }
 
   /**
-  * Select move from given possible moves on screen.
-  *
-  * @param list of possible moves
-  * @return selected move
-  */
-  Move selectMove(std::vector<Move>& moves) const {
-    std::sort(moves.begin(), moves.end());
-    int moveIdx = 0;
-    std::cout << std::endl;
-    std::cout << "Possible moves:" << std::endl;
-    for (int i = 0; i < moves.size(); i++) {
-      std::printf("%d: ", ++moveIdx);
-      std::printf("%d%c\t", moves[i].dest.r + 1, moves[i].dest.c + 65);
-    }
-    std::cout << std::endl;
-    std::cout << std::endl << "Select move: ";
-    moveIdx = readInput();
-    while (moveIdx <= 0 || moveIdx > moves.size()) {
-      std::cout << "Wrong choice. Try again: ";
-      moveIdx = readInput();
-    }
-    return moves[moveIdx - 1];
-  }
-
-  /**
   * Method called to display next player's name.
   */
-  std::string playerString(const Player& player) const {
-    return player == BoardSquareState::CROSS ? "CROSS" : "NOUGHT";
+  std::string playerString(Player const* player) const {
+    return player == Player::CROSS.get() ? "CROSS" : "NOUGHT";
   }
   /**
   * Method called when option is pressed to set the game difficulty.
@@ -182,27 +155,22 @@ class GameMain {
   void setDifficulty() {
     std::cout << std::endl
               << "1. EASY" << std::endl
-              << "2. NORMAL" << std::endl
-              << "3. HARD" << std::endl
-              << "4. HEROIC" << std::endl
+              << "2. HARD" << std::endl
+              << "3. MAX" << std::endl
               << std::endl
               << "Select difficulty: ";
     while (true) {
       switch (readInput()) {
         case 1:
-          controller.setDifficulty(DifficultyLevel::EASY);
+          player2->setDifficulty(DifficultyLevel::EASY);
           play();
           break;
         case 2:
-          controller.setDifficulty(DifficultyLevel::NORMAL);
+          player2->setDifficulty(DifficultyLevel::HARD);
           play();
           break;
         case 3:
-          controller.setDifficulty(DifficultyLevel::HARD);
-          play();
-          break;
-        case 4:
-          controller.setDifficulty(DifficultyLevel::HEROIC);
+          player2->setDifficulty(DifficultyLevel::MAX);
           play();
           break;
         default:
@@ -217,18 +185,30 @@ class GameMain {
   */
   void chooseNoughtOrCross() {
     std::cout << std::endl
-              << "1. " << Player::CROSS << std::endl
-              << "2. " << Player::NOUGHT << std::endl
+              << "1. "
+              << "CROSS" << std::endl
+              << "2. "
+              << "NOUGHT" << std::endl
               << std::endl
               << "Select cross or nought:";
     while (true) {
       switch (readInput()) {
         case 1:
-          human = Player::CROSS;
+          if (Player::CROSS->type() != PlayerType::HUMAN) {
+            Player::CROSS = std::make_unique<HumanPlayer>(
+                HumanPlayer(BoardSquareState::CROSS));
+          }
+          player1 = Player::CROSS.get();
+          player2 = Player::NOUGHT.get();
           play();
           break;
         case 2:
-          human = Player::NOUGHT;
+          if (Player::NOUGHT->type() != PlayerType::HUMAN) {
+            Player::NOUGHT =
+                std::make_unique<HumanPlayer>((BoardSquareState::NOUGHT));
+          }
+          player1 = Player::NOUGHT.get();
+          player2 = Player::CROSS.get();
           play();
           break;
         default:
@@ -248,12 +228,9 @@ class GameMain {
     } else {
       std::cout << std::endl << ":: We have a winner!";
       std::cout << std::endl
-                << "Congratulations " << controller.getWinner() << std::endl;
-      if (isOpponentAIPlayer &&
-          controller.getWinner().playerSymbol() ==
-              human.opponent().playerSymbol()) {
-        std::cout << std::endl << "==> Robots rule us!!" << std::endl;
-      }
+                << "Congratulations " << playerString(controller.getWinner())
+                << std::endl;
+      std::cout << controller.getWinner()->winMessage() << std::endl;
     }
   }
 
@@ -263,11 +240,10 @@ class GameMain {
   void rematch() {
     std::cout << "Ready for another game? [y/n]";
     char input;
-    std::cin >> input;
     while (true) {
+      std::cin >> input;
       switch (input) {
         case 'y': {
-          controller = GameController();
           startGame();
           break;
         }

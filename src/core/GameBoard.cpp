@@ -2,15 +2,17 @@
 
 GameBoard::GameBoard() { this->resetGameBoard(); }
 
-std::vector<std::vector<BoardSquareState>> const& GameBoard::getGameBoard()
-    const {
+std::array<std::array<BoardSquareState, GameConstants::SIZE>,
+           GameConstants::SIZE> const&
+GameBoard::getGameBoard() const {
   return gameBoard;
 }
 
 BoardStats GameBoard::getStats() const { return this->stats; }
 
 void GameBoard::setGameBoard(
-    std::vector<std::vector<BoardSquareState>> const& gameBoard) {
+    std::array<std::array<BoardSquareState, GameConstants::SIZE>,
+               GameConstants::SIZE> const& gameBoard) {
   this->gameBoard = gameBoard;
   this->stats = BoardStats();
   for (int i = 0; i < GameConstants::SIZE; i++) {
@@ -52,10 +54,6 @@ BoardSquareState GameBoard::getSquareState(BoardSquare const& square) const {
 }
 
 void GameBoard::resetGameBoard() {
-  gameBoard.resize(GameConstants::SIZE);
-  for (auto& v : gameBoard) {
-    v.resize(GameConstants::SIZE);
-  }
   for (int i = 0; i < GameConstants::SIZE; i++) {
     for (int j = 0; j < GameConstants::SIZE; j++) {
       gameBoard[i][j] = BoardSquareState::EMPTY;
@@ -132,16 +130,16 @@ bool GameBoard::checkRevDiagonalComplete(BoardSquareState const& state) const {
   return (stats.revDiagCounts[static_cast<int>(state)] == GameConstants::SIZE);
 }
 
-bool GameBoard::checkIfWon(Player const& player) const {
-  if (checkAnyRowOrColumnComplete(player.playerSymbol()) ||
-      checkDiagonalComplete(player.playerSymbol()) ||
-      checkRevDiagonalComplete(player.playerSymbol())) {
+bool GameBoard::checkIfWon(Player const* player) const {
+  if (checkAnyRowOrColumnComplete(player->playerSymbol()) ||
+      checkDiagonalComplete(player->playerSymbol()) ||
+      checkRevDiagonalComplete(player->playerSymbol())) {
     return true;
   }
   return false;
 }
 
-std::vector<Move> GameBoard::getPossibleMoves(Player const& player) const {
+std::vector<Move> GameBoard::getPossibleMoves() const {
   std::vector<Move> possibleMoves = std::vector<Move>();
   std::vector<BoardSquare> currentSquareStateCellsList =
       std::vector<BoardSquare>();

@@ -22,11 +22,7 @@
 class GameController {
   GameBoard gameBoard;
 
-  Player player;
-
-  /** Variable that is set to the number of moves ahead AIPlayer evaluates
-   * to select from current possible moves */
-  DifficultyLevel depth;
+  Player const* player;
 
  public:
   /**
@@ -39,7 +35,7 @@ class GameController {
    *
    * @param player
    */
-  void setPlayer(Player const& a_player);
+  void setPlayer(Player const* a_player);
 
   /**
    * Gets the game board.
@@ -56,20 +52,6 @@ class GameController {
   void setGameBoard(GameBoard const& a_gameBoard);
 
   /**
-   * Calls the gameboard method to generate possible
-   * next moves for current player
-   *
-   * @return the list of possible moves
-   */
-  std::vector<Move> markPossibleMoves();
-
-  /**
-   * Calls the gameboard method to unmark possible
-   * next moves for current player from game board
-   */
-  void unmarkPossibleMoves();
-
-  /**
    * Calls the gameboard method to make the next
    * move on the game board
    *
@@ -82,7 +64,7 @@ class GameController {
    *
    * @return the winner
    */
-  Player getWinner();
+  Player const* getWinner();
 
   /**
    * Checks if game ends in a draw.
@@ -108,7 +90,7 @@ class GameController {
    *
    * @return the player
    */
-  Player currentPlayer() const;
+  Player const* currentPlayer() const;
 
   /**
    * Prints the game board.
@@ -117,18 +99,5 @@ class GameController {
    */
   std::string printGameBoard();
 
-  /**
-   * Sets the difficulty level.
-   *
-   * @param difficulty level
-   */
-  void setDifficulty(DifficultyLevel level);
-
-  /**
-   * Evaluates current possible moves that can be made by
-   * the AI player and returns the best one
-   *
-   * @return the move
-   */
-  Move evaluateMove();
+  Move nextMove() const;
 };

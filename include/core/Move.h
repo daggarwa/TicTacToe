@@ -1,4 +1,5 @@
 #pragma once
+#include <string>
 
 #include "core/BoardSquare.h"
 /**
@@ -7,8 +8,7 @@
  *
  *  @author d
  */
-class Move
-{
+class Move {
  public:
   /** The dest. */
   BoardSquare dest;
@@ -16,24 +16,21 @@ class Move
   /**
    * Instantiates a new move.
    */
-  Move() : dest(BoardSquare(-1, -1)){
-  }
+  Move() : dest(BoardSquare(-1, -1)) {}
 
   /**
    * Instantiates a new move with given coordinates and moveType.
    *
    * @param c1 the c 1
    */
-  Move(BoardSquare c1):dest (c1){
-  }
+  Move(BoardSquare c1) : dest(c1) {}
 
   /**
    * Instantiates a new move from an existing move.
    *
    * @param other the other
    */
-  Move(Move const& other): dest (other.dest){
-  }
+  Move(Move const& other) : dest(other.dest) {}
 
   std::string toString() const {
     return std::to_string(dest.r + 1) + std::string(1, (char)(dest.c + 65));
