@@ -18,12 +18,13 @@ To launch game:
 
 	$ cmake -H. -Bbuild
 	$ cmake --build build -- -j3
+	
    The first command will create CMake configuration files inside folder /build and the second one will generate two executables TicTactToe and TicTacToeTest in /bin folder inside the root folder of the repository.
 
 5. To run the game can do :
 	$ ./bin/TicTacToe
 
-	This will give you the start menu for the game from where you can choose different options and will be able to play the came.
+	This will give you the start menu for the game from where you can choose different options and will be able to play the game.
 
 6. To run the unit tests for the game do :
 	$ ./bin/TicTacToeTest
