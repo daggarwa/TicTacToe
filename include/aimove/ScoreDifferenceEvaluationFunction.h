@@ -11,8 +11,8 @@
  * @author d
  */
 class ScoreDifferenceEvaluationFunction : public EvaluationFunction {
-  int calculateScore(GameBoard const& board, Player const& player) const;
+  int calculateScore(GameBoard const& board, Player const* player) const;
 
  public:
-  virtual int evaluate(GameBoard const& board, Player const& player) const;
+  virtual int evaluate(GameBoard const& board, Player const* player) const;
 };
